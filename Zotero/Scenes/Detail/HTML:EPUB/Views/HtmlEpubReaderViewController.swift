@@ -42,7 +42,7 @@ class HtmlEpubReaderViewController: UIViewController, ParentWithSidebarControlle
     }
     private(set) var isCompactWidth: Bool
     var statusBarHeight: CGFloat
-    weak var coordinatorDelegate: (HtmlEpubReaderCoordinatorDelegate&HtmlEpubSidebarCoordinatorDelegate)?
+    weak var coordinatorDelegate: (HtmlEpubReaderCoordinatorDelegate & HtmlEpubSidebarCoordinatorDelegate)?
     @CodableUserDefault(
         key: "HtmlEpubReaderToolbarState",
         defaultValue: AnnotationToolbarHandler.State(position: .leading, visible: true),

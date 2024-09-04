@@ -11,9 +11,7 @@ import UIKit
 import CocoaLumberjackSwift
 import RxSwift
 
-protocol HtmlEpubReaderCoordinatorDelegate: AnyObject {
-    func show(error: HtmlEpubReaderState.Error)
-    func showToolSettings(tool: AnnotationTool, colorHex: String?, sizeValue: Float?, sender: SourceView, userInterfaceStyle: UIUserInterfaceStyle, valueChanged: @escaping (String?, Float?) -> Void)
+protocol HtmlEpubReaderCoordinatorDelegate: ReaderCoordinatorDelegate {
     func showDocumentChangedAlert(completed: @escaping () -> Void)
     func show(url: URL)
 }
@@ -47,7 +45,7 @@ protocol HtmlEpubSidebarCoordinatorDelegate: AnyObject {
     func showSettings(with settings: HtmlEpubSettings, sender: UIBarButtonItem) -> ViewModel<ReaderSettingsActionHandler>
 }
 
-final class HtmlEpubCoordinator: Coordinator {
+final class HtmlEpubCoordinator: ReaderCoordinator {
     weak var parentCoordinator: Coordinator?
     var childCoordinators: [Coordinator]
     weak var navigationController: UINavigationController?

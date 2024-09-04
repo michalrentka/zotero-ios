@@ -49,12 +49,38 @@ struct HtmlEpubReaderState: ViewModelState {
         let modifications: [[String: Any]]
     }
 
-    enum Error: Swift.Error {
+    enum Error: ReaderError {
         case cantDeleteAnnotation
         case cantAddAnnotations
         case cantUpdateAnnotation
         case incompatibleDocument
         case unknown
+
+        var title: String {
+            switch self {
+            case .cantDeleteAnnotation, .cantAddAnnotations, .cantUpdateAnnotation, .incompatibleDocument, .unknown:
+                return L10n.error
+            }
+        }
+
+        var message: String {
+            switch self {
+            case .cantDeleteAnnotation:
+                return L10n.Errors.Pdf.cantDeleteAnnotations
+
+            case .cantAddAnnotations:
+                return L10n.Errors.Pdf.cantAddAnnotations
+
+            case .cantUpdateAnnotation:
+                return L10n.Errors.Pdf.cantUpdateAnnotation
+
+            case .incompatibleDocument:
+                return L10n.Errors.Pdf.cantUpdateAnnotation
+
+            case .unknown:
+                return L10n.Errors.unknown
+            }
+        }
     }
 
     let originalFile: File

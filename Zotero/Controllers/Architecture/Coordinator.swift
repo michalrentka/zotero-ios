@@ -7,6 +7,7 @@
 //
 
 import UIKit
+import CocoaLumberjackSwift
 
 enum SourceView {
     case view(UIView, CGRect?)
@@ -68,5 +69,53 @@ extension Coordinator {
         }
 
         (presenter ?? navigationController)?.present(controller, animated: true, completion: nil)
+    }
+}
+
+protocol ReaderError: Error {
+    var title: String { get }
+    var message: String { get }
+}
+
+protocol ReaderCoordinatorDelegate: AnyObject {
+    func show(error: ReaderError)
+    func showToolSettings(tool: AnnotationTool, colorHex: String?, sizeValue: Float?, sender: SourceView, userInterfaceStyle: UIUserInterfaceStyle, valueChanged: @escaping (String?, Float?) -> Void)
+}
+
+protocol ReaderCoordinator: Coordinator, ReaderCoordinatorDelegate {
+}
+
+extension ReaderCoordinator {
+    func show(error: ReaderError) {
+        let controller = UIAlertController(title: error.title, message: error.message, preferredStyle: .alert)
+        controller.addAction(UIAlertAction(title: L10n.ok, style: .default))
+        navigationController?.present(controller, animated: true)
+    }
+
+    func showToolSettings(tool: AnnotationTool, colorHex: String?, sizeValue: Float?, sender: SourceView, userInterfaceStyle: UIUserInterfaceStyle, valueChanged: @escaping (String?, Float?) -> Void) {
+        DDLogInfo("ReaderCoordinator: show tool settings for \(tool)")
+        let state = AnnotationToolOptionsState(tool: tool, colorHex: colorHex, size: sizeValue)
+        let handler = AnnotationToolOptionsActionHandler()
+        let controller = AnnotationToolOptionsViewController(viewModel: ViewModel(initialState: state, handler: handler), valueChanged: valueChanged)
+
+        switch UIDevice.current.userInterfaceIdiom {
+        case .pad:
+            controller.overrideUserInterfaceStyle = userInterfaceStyle
+            controller.modalPresentationStyle = .popover
+            switch sender {
+            case .view(let view, _):
+                controller.popoverPresentationController?.sourceView = view
+
+            case .item(let item):
+                controller.popoverPresentationController?.barButtonItem = item
+            }
+            navigationController?.present(controller, animated: true, completion: nil)
+
+        default:
+            let navigationController = UINavigationController(rootViewController: controller)
+            navigationController.modalPresentationStyle = .formSheet
+            navigationController.overrideUserInterfaceStyle = userInterfaceStyle
+            self.navigationController?.present(navigationController, animated: true, completion: nil)
+        }
     }
 }

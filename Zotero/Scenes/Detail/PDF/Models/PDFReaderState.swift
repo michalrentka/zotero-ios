@@ -54,7 +54,7 @@ struct PDFReaderState: ViewModelState {
         static let md5 = Changes(rawValue: 1 << 17)
     }
 
-    enum Error: Swift.Error {
+    enum Error: ReaderError {
         case cantDeleteAnnotation
         case cantAddAnnotations
         case cantUpdateAnnotation
@@ -62,6 +62,41 @@ struct PDFReaderState: ViewModelState {
         case pageNotInt
         case unknown
         case documentEmpty
+
+        var title: String {
+            switch self {
+            case .cantDeleteAnnotation, .cantAddAnnotations, .cantUpdateAnnotation, .pageNotInt, .unknown, .documentEmpty:
+                return L10n.error
+
+            case .mergeTooBig:
+                return L10n.Errors.Pdf.mergeTooBigTitle
+            }
+        }
+
+        var message: String {
+            switch self {
+            case .cantDeleteAnnotation:
+                return L10n.Errors.Pdf.cantDeleteAnnotations
+
+            case .cantAddAnnotations:
+                return L10n.Errors.Pdf.cantAddAnnotations
+
+            case .cantUpdateAnnotation:
+                return L10n.Errors.Pdf.cantUpdateAnnotation
+
+            case .mergeTooBig:
+                return L10n.Errors.Pdf.mergeTooBig
+
+            case .pageNotInt:
+                return L10n.Errors.Pdf.pageIndexNotInt
+
+            case .unknown:
+                return L10n.Errors.unknown
+
+            case .documentEmpty:
+                return L10n.Errors.Pdf.emptyDocument
+            }
+        }
     }
 
     let key: String

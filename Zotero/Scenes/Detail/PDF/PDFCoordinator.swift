@@ -14,8 +14,7 @@ import PSPDFKit
 import PSPDFKitUI
 import RxSwift
 
-protocol PdfReaderCoordinatorDelegate: AnyObject {
-    func showToolSettings(tool: AnnotationTool, colorHex: String?, sizeValue: Float?, sender: SourceView, userInterfaceStyle: UIUserInterfaceStyle, valueChanged: @escaping (String?, Float?) -> Void)
+protocol PdfReaderCoordinatorDelegate: ReaderCoordinatorDelegate {
     func showSearch(pdfController: PDFViewController, text: String?, sender: UIBarButtonItem, userInterfaceStyle: UIUserInterfaceStyle, delegate: PDFSearchDelegate)
     func showAnnotationPopover(
         viewModel: ViewModel<PDFReaderActionHandler>,
@@ -23,7 +22,6 @@ protocol PdfReaderCoordinatorDelegate: AnyObject {
         popoverDelegate: UIPopoverPresentationControllerDelegate,
         userInterfaceStyle: UIUserInterfaceStyle
     ) -> PublishSubject<AnnotationPopoverState>?
-    func show(error: PDFReaderState.Error)
     func show(error: PDFDocumentExporter.Error)
     func share(url: URL, barButton: UIBarButtonItem)
     func share(text: String, rect: CGRect, view: UIView, userInterfaceStyle: UIUserInterfaceStyle)
@@ -62,7 +60,7 @@ protocol PdfAnnotationsCoordinatorDelegate: AnyObject {
     )
 }
 
-final class PDFCoordinator: Coordinator {
+final class PDFCoordinator: ReaderCoordinator {
     weak var parentCoordinator: Coordinator?
     var childCoordinators: [Coordinator]
     private var pdfSearchController: PDFSearchViewController?
@@ -164,33 +162,6 @@ final class PDFCoordinator: Coordinator {
 }
 
 extension PDFCoordinator: PdfReaderCoordinatorDelegate {
-    func showToolSettings(tool: AnnotationTool, colorHex: String?, sizeValue: Float?, sender: SourceView, userInterfaceStyle: UIUserInterfaceStyle, valueChanged: @escaping (String?, Float?) -> Void) {
-        DDLogInfo("PDFCoordinator: show tool settings for \(tool)")
-        let state = AnnotationToolOptionsState(tool: tool, colorHex: colorHex, size: sizeValue)
-        let handler = AnnotationToolOptionsActionHandler()
-        let controller = AnnotationToolOptionsViewController(viewModel: ViewModel(initialState: state, handler: handler), valueChanged: valueChanged)
-
-        switch UIDevice.current.userInterfaceIdiom {
-        case .pad:
-            controller.overrideUserInterfaceStyle = userInterfaceStyle
-            controller.modalPresentationStyle = .popover
-            switch sender {
-            case .view(let view, _):
-                controller.popoverPresentationController?.sourceView = view
-
-            case .item(let item):
-                controller.popoverPresentationController?.barButtonItem = item
-            }
-            self.navigationController?.present(controller, animated: true, completion: nil)
-
-        default:
-            let navigationController = UINavigationController(rootViewController: controller)
-            navigationController.modalPresentationStyle = .formSheet
-            navigationController.overrideUserInterfaceStyle = userInterfaceStyle
-            self.navigationController?.present(navigationController, animated: true, completion: nil)
-        }
-    }
-
     func showAnnotationPopover(
         viewModel: ViewModel<PDFReaderActionHandler>,
         sourceRect: CGRect,
@@ -303,43 +274,16 @@ extension PDFCoordinator: PdfReaderCoordinatorDelegate {
         self.share(item: text, sourceView: .view(view, rect), userInterfaceStyle: userInterfaceStyle)
     }
 
-    func show(error: PDFReaderState.Error) {
-        let title: String
-        let message: String
-
-        switch error {
-        case .mergeTooBig:
-            title = L10n.Errors.Pdf.mergeTooBigTitle
-            message = L10n.Errors.Pdf.mergeTooBig
-
-        case .cantAddAnnotations:
-            title = L10n.error
-            message = L10n.Errors.Pdf.cantAddAnnotations
-
-        case .cantDeleteAnnotation:
-            title = L10n.error
-            message = L10n.Errors.Pdf.cantDeleteAnnotations
-
-        case .cantUpdateAnnotation:
-            title = L10n.error
-            message = L10n.Errors.Pdf.cantUpdateAnnotation
-
-        case .pageNotInt:
-            title = L10n.error
-            message = L10n.Errors.Pdf.pageIndexNotInt
-
-        case .documentEmpty:
-            title = L10n.error
-            message = L10n.Errors.Pdf.emptyDocument
-
-        case .unknown:
-            title = L10n.error
-            message = L10n.Errors.unknown
-        }
-
-        let controller = UIAlertController(title: title, message: message, preferredStyle: .alert)
-        controller.addAction(UIAlertAction(title: L10n.ok, style: .default))
-        self.navigationController?.present(controller, animated: true)
+    func lookup(text: String, rect: CGRect, view: UIView, userInterfaceStyle: UIUserInterfaceStyle) {
+        DDLogInfo("PDFCoordinator: show lookup")
+        // When presented as a popover, UIReferenceLibraryViewController ignores overrideUserInterfaceStyle, so we wrap it in a navigation controller to force it.
+        let controller = UINavigationController(rootViewController: UIReferenceLibraryViewController(term: text))
+        controller.setNavigationBarHidden(true, animated: false)
+        controller.overrideUserInterfaceStyle = userInterfaceStyle
+        controller.modalPresentationStyle = .popover
+        controller.popoverPresentationController?.sourceView = view
+        controller.popoverPresentationController?.sourceRect = rect
+        self.navigationController?.present(controller, animated: true, completion: nil)
     }
 
     func show(error: PDFDocumentExporter.Error) {
