@@ -40,6 +40,11 @@ struct HtmlEpubAnnotation {
             tags: tags
         )
     }
+}
+
+extension HtmlEpubAnnotation: ReaderAnnotation {
+    var lineWidth: CGFloat? { 0 }
+    var fontSize: CGFloat? { 12 }
 
     func editability(currentUserId: Int, library: Library) -> AnnotationEditability {
         switch library.identifier {

@@ -536,8 +536,8 @@ extension HtmlEpubReaderViewController: HtmlEpubReaderContainerDelegate {
     }
 }
 
-extension HtmlEpubReaderViewController: HtmlEpubAnnotationsDelegate {
-    func parseAndCacheIfNeededAttributedText(for annotation: HtmlEpubAnnotation, with font: UIFont) -> NSAttributedString? {
+extension HtmlEpubReaderViewController: ReaderAnnotationsDelegate {
+    func parseAndCacheIfNeededAttributedText(for annotation: ReaderAnnotation, with font: UIFont) -> NSAttributedString? {
         guard let text = annotation.text, !text.isEmpty else { return nil }
 
         if let attributedText = viewModel.state.texts[annotation.key]?.1[font] {
@@ -548,7 +548,7 @@ extension HtmlEpubReaderViewController: HtmlEpubAnnotationsDelegate {
         return viewModel.state.texts[annotation.key]?.1[font]
     }
 
-    func parseAndCacheIfNeededAttributedComment(for annotation: HtmlEpubAnnotation) -> NSAttributedString? {
+    func parseAndCacheIfNeededAttributedComment(for annotation: ReaderAnnotation) -> NSAttributedString? {
         let comment = annotation.comment
         guard !comment.isEmpty else { return nil }
 

@@ -10,11 +10,6 @@ import UIKit
 
 import RxSwift
 
-protocol HtmlEpubAnnotationsDelegate: AnyObject {
-    func parseAndCacheIfNeededAttributedText(for annotation: HtmlEpubAnnotation, with font: UIFont) -> NSAttributedString?
-    func parseAndCacheIfNeededAttributedComment(for annotation: HtmlEpubAnnotation) -> NSAttributedString?
-}
-
 class HtmlEpubSidebarViewController: UIViewController {
     private static let cellId = "AnnotationCell"
     private let viewModel: ViewModel<HtmlEpubReaderActionHandler>

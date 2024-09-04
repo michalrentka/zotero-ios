@@ -72,6 +72,21 @@ extension Coordinator {
     }
 }
 
+protocol ReaderAnnotation {
+    var key: String { get }
+    var type: AnnotationType { get }
+    var pageLabel: String { get }
+    var lineWidth: CGFloat? { get }
+    var color: String { get }
+    var comment: String { get }
+    var text: String? { get }
+    var fontSize: CGFloat? { get }
+    var sortIndex: String { get }
+    var dateModified: Date { get }
+
+    func editability(currentUserId: Int, library: Library) -> AnnotationEditability
+}
+
 protocol ReaderError: Error {
     var title: String { get }
     var message: String { get }
@@ -82,7 +97,27 @@ protocol ReaderCoordinatorDelegate: AnyObject {
     func showToolSettings(tool: AnnotationTool, colorHex: String?, sizeValue: Float?, sender: SourceView, userInterfaceStyle: UIUserInterfaceStyle, valueChanged: @escaping (String?, Float?) -> Void)
 }
 
-protocol ReaderCoordinator: Coordinator, ReaderCoordinatorDelegate {
+protocol ReaderSidebarCoordinatorDelegate: AnyObject {
+    func showTagPicker(libraryId: LibraryIdentifier, selected: Set<String>, userInterfaceStyle: UIUserInterfaceStyle?, picked: @escaping ([Tag]) -> Void)
+    func showCellOptions(
+        for annotation: ReaderAnnotation,
+        userId: Int,
+        library: Library,
+        highlightFont: UIFont,
+        sender: UIButton,
+        userInterfaceStyle: UIUserInterfaceStyle,
+        saveAction: @escaping AnnotationEditSaveAction,
+        deleteAction: @escaping AnnotationEditDeleteAction
+    )
+}
+
+protocol ReaderAnnotationsDelegate: AnyObject {
+    func parseAndCacheIfNeededAttributedText(for annotation: ReaderAnnotation, with font: UIFont) -> NSAttributedString?
+    func parseAndCacheIfNeededAttributedComment(for annotation: ReaderAnnotation) -> NSAttributedString?
+}
+
+protocol ReaderCoordinator: Coordinator, ReaderCoordinatorDelegate, ReaderSidebarCoordinatorDelegate {
+    var controllers: Controllers { get }
 }
 
 extension ReaderCoordinator {
@@ -117,5 +152,56 @@ extension ReaderCoordinator {
             navigationController.overrideUserInterfaceStyle = userInterfaceStyle
             self.navigationController?.present(navigationController, animated: true, completion: nil)
         }
+    }
+}
+
+extension ReaderCoordinator {
+    func showTagPicker(libraryId: LibraryIdentifier, selected: Set<String>, userInterfaceStyle: UIUserInterfaceStyle?, picked: @escaping ([Tag]) -> Void) {
+        guard let navigationController, let parentCoordinator = parentCoordinator as? DetailCoordinator else { return }
+        parentCoordinator.showTagPicker(libraryId: libraryId, selected: selected, userInterfaceStyle: userInterfaceStyle, navigationController: navigationController, picked: picked)
+    }
+
+    func showCellOptions(
+        for annotation: any ReaderAnnotation,
+        userId: Int,
+        library: Library,
+        highlightFont: UIFont,
+        sender: UIButton,
+        userInterfaceStyle: UIUserInterfaceStyle,
+        saveAction: @escaping AnnotationEditSaveAction,
+        deleteAction: @escaping AnnotationEditDeleteAction
+    ) {
+        let navigationController = NavigationViewController()
+        navigationController.overrideUserInterfaceStyle = userInterfaceStyle
+
+        let highlightText: NSAttributedString = (self.navigationController?.viewControllers.first as? ReaderAnnotationsDelegate)?
+            .parseAndCacheIfNeededAttributedText(for: annotation, with: highlightFont) ?? .init(string: "")
+        let coordinator = AnnotationEditCoordinator(
+            data: AnnotationEditState.Data(
+                type: annotation.type,
+                isEditable: annotation.editability(currentUserId: userId, library: library) == .editable,
+                color: annotation.color,
+                lineWidth: annotation.lineWidth ?? 0,
+                pageLabel: annotation.pageLabel,
+                highlightText: highlightText,
+                highlightFont: highlightFont,
+                fontSize: annotation.fontSize
+            ),
+            saveAction: saveAction,
+            deleteAction: deleteAction,
+            navigationController: navigationController,
+            controllers: controllers
+        )
+        coordinator.parentCoordinator = self
+        childCoordinators.append(coordinator)
+        coordinator.start(animated: false)
+
+        if UIDevice.current.userInterfaceIdiom == .pad {
+            navigationController.modalPresentationStyle = .popover
+            navigationController.popoverPresentationController?.sourceView = sender
+            navigationController.popoverPresentationController?.permittedArrowDirections = .left
+        }
+
+        self.navigationController?.present(navigationController, animated: true, completion: nil)
     }
 }

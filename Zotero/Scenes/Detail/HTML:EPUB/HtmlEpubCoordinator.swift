@@ -16,18 +16,7 @@ protocol HtmlEpubReaderCoordinatorDelegate: ReaderCoordinatorDelegate {
     func show(url: URL)
 }
 
-protocol HtmlEpubSidebarCoordinatorDelegate: AnyObject {
-    func showTagPicker(libraryId: LibraryIdentifier, selected: Set<String>, userInterfaceStyle: UIUserInterfaceStyle?, picked: @escaping ([Tag]) -> Void)
-    func showCellOptions(
-        for annotation: HtmlEpubAnnotation,
-        userId: Int,
-        library: Library,
-        highlightFont: UIFont,
-        sender: UIButton,
-        userInterfaceStyle: UIUserInterfaceStyle,
-        saveAction: @escaping AnnotationEditSaveAction,
-        deleteAction: @escaping AnnotationEditDeleteAction
-    )
+protocol HtmlEpubSidebarCoordinatorDelegate: ReaderSidebarCoordinatorDelegate {
     func showAnnotationPopover(
         viewModel: ViewModel<HtmlEpubReaderActionHandler>,
         sourceRect: CGRect,
@@ -54,7 +43,7 @@ final class HtmlEpubCoordinator: ReaderCoordinator {
     private let parentKey: String?
     private let libraryId: LibraryIdentifier
     private let url: URL
-    private unowned let controllers: Controllers
+    internal unowned let controllers: Controllers
     private let disposeBag: DisposeBag
 
     init(key: String, parentKey: String?, libraryId: LibraryIdentifier, url: URL, navigationController: NavigationViewController, controllers: Controllers) {
@@ -180,61 +169,6 @@ extension HtmlEpubCoordinator: HtmlEpubReaderCoordinatorDelegate {
 }
 
 extension HtmlEpubCoordinator: HtmlEpubSidebarCoordinatorDelegate {
-    func showTagPicker(libraryId: LibraryIdentifier, selected: Set<String>, userInterfaceStyle: UIUserInterfaceStyle?, picked: @escaping ([Tag]) -> Void) {
-        guard let navigationController else { return }
-        (parentCoordinator as? DetailCoordinator)?.showTagPicker(
-            libraryId: libraryId,
-            selected: selected,
-            userInterfaceStyle: userInterfaceStyle,
-            navigationController: navigationController,
-            picked: picked
-        )
-    }
-    
-    func showCellOptions(
-        for annotation: HtmlEpubAnnotation,
-        userId: Int,
-        library: Library,
-        highlightFont: UIFont,
-        sender: UIButton,
-        userInterfaceStyle: UIUserInterfaceStyle,
-        saveAction: @escaping AnnotationEditSaveAction,
-        deleteAction: @escaping AnnotationEditDeleteAction
-    ) {
-        let navigationController = NavigationViewController()
-        navigationController.overrideUserInterfaceStyle = userInterfaceStyle
-
-        let highlightText: NSAttributedString = (self.navigationController?.viewControllers.first as? HtmlEpubAnnotationsDelegate)?
-            .parseAndCacheIfNeededAttributedText(for: annotation, with: highlightFont) ?? .init(string: "")
-        let coordinator = AnnotationEditCoordinator(
-            data: AnnotationEditState.Data(
-                type: annotation.type,
-                isEditable: annotation.editability(currentUserId: userId, library: library) == .editable,
-                color: annotation.color,
-                lineWidth: 0,
-                pageLabel: annotation.pageLabel,
-                highlightText: highlightText,
-                highlightFont: highlightFont,
-                fontSize: 12
-            ),
-            saveAction: saveAction,
-            deleteAction: deleteAction,
-            navigationController: navigationController,
-            controllers: controllers
-        )
-        coordinator.parentCoordinator = self
-        childCoordinators.append(coordinator)
-        coordinator.start(animated: false)
-
-        if UIDevice.current.userInterfaceIdiom == .pad {
-            navigationController.modalPresentationStyle = .popover
-            navigationController.popoverPresentationController?.sourceView = sender
-            navigationController.popoverPresentationController?.permittedArrowDirections = .left
-        }
-
-        self.navigationController?.present(navigationController, animated: true, completion: nil)
-    }
-
     func showAnnotationPopover(
         viewModel: ViewModel<HtmlEpubReaderActionHandler>,
         sourceRect: CGRect,
@@ -252,10 +186,10 @@ extension HtmlEpubCoordinator: HtmlEpubSidebarCoordinatorDelegate {
         let navigationController = NavigationViewController()
         navigationController.overrideUserInterfaceStyle = userInterfaceStyle
         let author = viewModel.state.library.identifier == .custom(.myLibrary) ? "" : annotation.author
-        let comment: NSAttributedString = (self.navigationController?.viewControllers.first as? HtmlEpubAnnotationsDelegate)?
+        let comment: NSAttributedString = (self.navigationController?.viewControllers.first as? ReaderAnnotationsDelegate)?
             .parseAndCacheIfNeededAttributedComment(for: annotation) ?? .init(string: "")
         let highlightFont = viewModel.state.textFont
-        let highlightText: NSAttributedString = (self.navigationController?.viewControllers.first as? HtmlEpubAnnotationsDelegate)?
+        let highlightText: NSAttributedString = (self.navigationController?.viewControllers.first as? ReaderAnnotationsDelegate)?
             .parseAndCacheIfNeededAttributedText(for: annotation, with: highlightFont) ?? .init(string: "")
         let editability = annotation.editability(currentUserId: viewModel.state.userId, library: viewModel.state.library)
         let data = AnnotationPopoverState.Data(
