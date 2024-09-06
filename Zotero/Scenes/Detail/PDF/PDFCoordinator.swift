@@ -26,7 +26,6 @@ protocol PdfReaderCoordinatorDelegate: ReaderCoordinatorDelegate, ReaderSidebarC
     func share(url: URL, barButton: UIBarButtonItem)
     func share(text: String, rect: CGRect, view: UIView, userInterfaceStyle: UIUserInterfaceStyle)
     func showDeletedAlertForPdf(completion: @escaping (Bool) -> Void)
-    func showSettings(with settings: PDFSettings, sender: UIBarButtonItem) -> ViewModel<ReaderSettingsActionHandler>
     func showReader(document: Document, userInterfaceStyle: UIUserInterfaceStyle)
     func showCitation(for itemId: String, libraryId: LibraryIdentifier)
     func copyBibliography(using presenter: UIViewController, for itemId: String, libraryId: LibraryIdentifier)
@@ -305,29 +304,6 @@ extension PDFCoordinator: PdfReaderCoordinatorDelegate {
             delete()
         }))
         self.navigationController?.present(controller, animated: true, completion: nil)
-    }
-
-    func showSettings(with settings: PDFSettings, sender: UIBarButtonItem) -> ViewModel<ReaderSettingsActionHandler> {
-        DDLogInfo("PDFCoordinator: show settings")
-
-        let state = ReaderSettingsState(settings: settings)
-        let viewModel = ViewModel(initialState: state, handler: ReaderSettingsActionHandler())
-        let baseController = ReaderSettingsViewController(rows: [.pageTransition, .pageMode, .pageSpreads, .scrollDirection, .pageFitting, .appearance], viewModel: viewModel)
-
-        let controller: UIViewController
-        if UIDevice.current.userInterfaceIdiom == .pad {
-            controller = baseController
-        } else {
-            controller = UINavigationController(rootViewController: baseController)
-        }
-
-        controller.modalPresentationStyle = UIDevice.current.userInterfaceIdiom == .pad ? .popover : .formSheet
-        controller.popoverPresentationController?.barButtonItem = sender
-        controller.preferredContentSize = CGSize(width: 480, height: 308)
-        controller.overrideUserInterfaceStyle = settings.appearanceMode.userInterfaceStyle
-        self.navigationController?.present(controller, animated: true, completion: nil)
-
-        return viewModel
     }
 
     func showReader(document: Document, userInterfaceStyle: UIUserInterfaceStyle) {

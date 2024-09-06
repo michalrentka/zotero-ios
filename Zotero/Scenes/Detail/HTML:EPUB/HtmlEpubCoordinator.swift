@@ -23,7 +23,6 @@ protocol HtmlEpubSidebarCoordinatorDelegate: ReaderSidebarCoordinatorDelegate {
         popoverDelegate: UIPopoverPresentationControllerDelegate,
         userInterfaceStyle: UIUserInterfaceStyle
     ) -> PublishSubject<AnnotationPopoverState>?
-    func showSettings(with settings: HtmlEpubSettings, sender: UIBarButtonItem) -> ViewModel<ReaderSettingsActionHandler>
 }
 
 final class HtmlEpubCoordinator: ReaderCoordinator {
@@ -158,6 +157,10 @@ extension HtmlEpubCoordinator: HtmlEpubReaderCoordinatorDelegate {
         controller.addAction(UIAlertAction(title: L10n.ok, style: .cancel, handler: { _ in completed() }))
         navigationController?.present(controller, animated: true)
     }
+
+    func show(url: URL) {
+        (parentCoordinator as? DetailCoordinator)?.show(url: url)
+    }
 }
 
 extension HtmlEpubCoordinator: HtmlEpubSidebarCoordinatorDelegate {
@@ -214,30 +217,5 @@ extension HtmlEpubCoordinator: HtmlEpubSidebarCoordinatorDelegate {
         currentNavigationController.present(navigationController, animated: true, completion: nil)
 
         return coordinator.viewModelObservable
-    }
-
-    func showSettings(with settings: HtmlEpubSettings, sender: UIBarButtonItem) -> ViewModel<ReaderSettingsActionHandler> {
-        DDLogInfo("HtmlEpubCoordinator: show settings")
-
-        let state = ReaderSettingsState(settings: settings)
-        let viewModel = ViewModel(initialState: state, handler: ReaderSettingsActionHandler())
-        let baseController = ReaderSettingsViewController(rows: [.appearance], viewModel: viewModel)
-        let controller: UIViewController
-        if UIDevice.current.userInterfaceIdiom == .pad {
-            controller = baseController
-        } else {
-            controller = UINavigationController(rootViewController: baseController)
-        }
-        controller.modalPresentationStyle = UIDevice.current.userInterfaceIdiom == .pad ? .popover : .formSheet
-        controller.popoverPresentationController?.barButtonItem = sender
-        controller.preferredContentSize = CGSize(width: 480, height: 92)
-        controller.overrideUserInterfaceStyle = settings.appearance.userInterfaceStyle
-        navigationController?.present(controller, animated: true, completion: nil)
-
-        return viewModel
-    }
-
-    func show(url: URL) {
-        (parentCoordinator as? DetailCoordinator)?.show(url: url)
     }
 }
