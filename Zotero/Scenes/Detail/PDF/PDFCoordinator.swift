@@ -38,14 +38,6 @@ protocol PdfReaderCoordinatorDelegate: ReaderCoordinatorDelegate, ReaderSidebarC
 protocol PdfAnnotationsCoordinatorDelegate: ReaderSidebarCoordinatorDelegate {
     func createShareAnnotationMenu(state: PDFReaderState, annotation: PDFAnnotation, sender: UIButton) -> UIMenu?
     func shareAnnotationImage(state: PDFReaderState, annotation: PDFAnnotation, scale: CGFloat, sender: UIButton )
-    func showFilterPopup(
-        from barButton: UIBarButtonItem,
-        filter: AnnotationsFilter?,
-        availableColors: [String],
-        availableTags: [Tag],
-        userInterfaceStyle: UIUserInterfaceStyle,
-        completed: @escaping (AnnotationsFilter?) -> Void
-    )
 }
 
 final class PDFCoordinator: ReaderCoordinator {
@@ -493,40 +485,6 @@ extension PDFCoordinator: PdfAnnotationsCoordinatorDelegate {
             // TODO: show error?
         }
         .disposed(by: disposeBag)
-    }
-    
-    func showFilterPopup(
-        from barButton: UIBarButtonItem,
-        filter: AnnotationsFilter?,
-        availableColors: [String],
-        availableTags: [Tag],
-        userInterfaceStyle: UIUserInterfaceStyle,
-        completed: @escaping (AnnotationsFilter?) -> Void
-    ) {
-        DDLogInfo("PDFCoordinator: show annotations filter popup")
-
-        let navigationController = NavigationViewController()
-        navigationController.overrideUserInterfaceStyle = userInterfaceStyle
-
-        let coordinator = AnnotationsFilterPopoverCoordinator(
-            initialFilter: filter,
-            availableColors: availableColors,
-            availableTags: availableTags,
-            navigationController: navigationController,
-            controllers: self.controllers,
-            completionHandler: completed
-        )
-        coordinator.parentCoordinator = self
-        self.childCoordinators.append(coordinator)
-        coordinator.start(animated: false)
-
-        if UIDevice.current.userInterfaceIdiom == .pad {
-            navigationController.modalPresentationStyle = .popover
-            navigationController.popoverPresentationController?.barButtonItem = barButton
-            navigationController.popoverPresentationController?.permittedArrowDirections = .down
-        }
-
-        self.navigationController?.present(navigationController, animated: true, completion: nil)
     }
 }
 

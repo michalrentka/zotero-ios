@@ -109,6 +109,14 @@ protocol ReaderSidebarCoordinatorDelegate: AnyObject {
         saveAction: @escaping AnnotationEditSaveAction,
         deleteAction: @escaping AnnotationEditDeleteAction
     )
+    func showFilterPopup(
+        from barButton: UIBarButtonItem,
+        filter: AnnotationsFilter?,
+        availableColors: [String],
+        availableTags: [Tag],
+        userInterfaceStyle: UIUserInterfaceStyle,
+        completed: @escaping (AnnotationsFilter?) -> Void
+    )
 }
 
 protocol ReaderAnnotationsDelegate: AnyObject {
@@ -200,6 +208,39 @@ extension ReaderCoordinator {
             navigationController.modalPresentationStyle = .popover
             navigationController.popoverPresentationController?.sourceView = sender
             navigationController.popoverPresentationController?.permittedArrowDirections = .left
+        }
+
+        self.navigationController?.present(navigationController, animated: true, completion: nil)
+    }
+
+    func showFilterPopup(
+        from barButton: UIBarButtonItem,
+        filter: AnnotationsFilter?,
+        availableColors: [String],
+        availableTags: [Tag],
+        userInterfaceStyle: UIUserInterfaceStyle,
+        completed: @escaping (AnnotationsFilter?) -> Void
+    ) {
+        DDLogInfo("ReaderCoordinator: show annotations filter popup")
+
+        let navigationController = NavigationViewController()
+        navigationController.overrideUserInterfaceStyle = userInterfaceStyle
+        let coordinator = AnnotationsFilterPopoverCoordinator(
+            initialFilter: filter,
+            availableColors: availableColors,
+            availableTags: availableTags,
+            navigationController: navigationController,
+            controllers: controllers,
+            completionHandler: completed
+        )
+        coordinator.parentCoordinator = self
+        childCoordinators.append(coordinator)
+        coordinator.start(animated: false)
+
+        if UIDevice.current.userInterfaceIdiom == .pad {
+            navigationController.modalPresentationStyle = .popover
+            navigationController.popoverPresentationController?.barButtonItem = barButton
+            navigationController.popoverPresentationController?.permittedArrowDirections = .down
         }
 
         self.navigationController?.present(navigationController, animated: true, completion: nil)
