@@ -16,12 +16,6 @@ import RxSwift
 
 protocol PdfReaderCoordinatorDelegate: ReaderCoordinatorDelegate, ReaderSidebarCoordinatorDelegate {
     func showSearch(pdfController: PDFViewController, text: String?, sender: UIBarButtonItem, userInterfaceStyle: UIUserInterfaceStyle, delegate: PDFSearchDelegate)
-    func showAnnotationPopover(
-        viewModel: ViewModel<PDFReaderActionHandler>,
-        sourceRect: CGRect,
-        popoverDelegate: UIPopoverPresentationControllerDelegate,
-        userInterfaceStyle: UIUserInterfaceStyle
-    ) -> PublishSubject<AnnotationPopoverState>?
     func show(error: PDFDocumentExporter.Error)
     func share(url: URL, barButton: UIBarButtonItem)
     func share(text: String, rect: CGRect, view: UIView, userInterfaceStyle: UIUserInterfaceStyle)
@@ -126,7 +120,6 @@ final class PDFCoordinator: ReaderCoordinator {
             settings: settings,
             userId: userId,
             username: username,
-            displayName: displayName,
             interfaceStyle: settings.appearanceMode == .automatic ? parentNavigationController.view.traitCollection.userInterfaceStyle : settings.appearanceMode.userInterfaceStyle
         )
         let controller = PDFReaderViewController(
@@ -141,62 +134,6 @@ final class PDFCoordinator: ReaderCoordinator {
 }
 
 extension PDFCoordinator: PdfReaderCoordinatorDelegate {
-    func showAnnotationPopover(
-        viewModel: ViewModel<PDFReaderActionHandler>,
-        sourceRect: CGRect,
-        popoverDelegate: UIPopoverPresentationControllerDelegate,
-        userInterfaceStyle: UIUserInterfaceStyle
-    ) -> PublishSubject<AnnotationPopoverState>? {
-        guard let currentNavigationController = navigationController, let annotation = viewModel.state.selectedAnnotation else { return nil }
-
-        DDLogInfo("PDFCoordinator: show annotation popover")
-
-        if let coordinator = childCoordinators.last, coordinator is AnnotationPopoverCoordinator {
-            DDLogWarn("PDFCoordinator: another annotation popover is already showing, ignoring")
-        }
-
-        let navigationController = NavigationViewController()
-        navigationController.overrideUserInterfaceStyle = userInterfaceStyle
-
-        let author = viewModel.state.library.identifier == .custom(.myLibrary) ? "" : annotation.author(displayName: viewModel.state.displayName, username: viewModel.state.username)
-        let comment: NSAttributedString = (self.navigationController?.viewControllers.first as? ReaderAnnotationsDelegate)?.parseAndCacheIfNeededAttributedComment(for: annotation) ?? .init(string: "")
-        let highlightFont = viewModel.state.textEditorFont
-        let highlightText: NSAttributedString = (self.navigationController?.viewControllers.first as? ReaderAnnotationsDelegate)?
-            .parseAndCacheIfNeededAttributedText(for: annotation, with: highlightFont) ?? .init(string: "")
-        let editability = annotation.editability(currentUserId: viewModel.state.userId, library: viewModel.state.library)
-
-        let data = AnnotationPopoverState.Data(
-            libraryId: viewModel.state.library.identifier,
-            type: annotation.type,
-            isEditable: editability == .editable,
-            author: author,
-            comment: comment,
-            color: annotation.color,
-            lineWidth: annotation.lineWidth ?? 0,
-            pageLabel: annotation.pageLabel,
-            highlightText: highlightText,
-            highlightFont: highlightFont,
-            tags: annotation.tags,
-            showsDeleteButton: editability != .notEditable
-        )
-        let coordinator = AnnotationPopoverCoordinator(data: data, navigationController: navigationController, controllers: controllers)
-        coordinator.parentCoordinator = self
-        childCoordinators.append(coordinator)
-        coordinator.start(animated: false)
-
-        if UIDevice.current.userInterfaceIdiom == .pad {
-            navigationController.modalPresentationStyle = .popover
-            navigationController.popoverPresentationController?.sourceView = currentNavigationController.view
-            navigationController.popoverPresentationController?.sourceRect = sourceRect
-            navigationController.popoverPresentationController?.permittedArrowDirections = [.left, .right]
-            navigationController.popoverPresentationController?.delegate = popoverDelegate
-        }
-
-        currentNavigationController.present(navigationController, animated: true, completion: nil)
-
-        return coordinator.viewModelObservable
-    }
-
     func showSearch(pdfController: PDFViewController, text: String?, sender: UIBarButtonItem, userInterfaceStyle: UIUserInterfaceStyle, delegate: PDFSearchDelegate) {
         DDLogInfo("PDFCoordinator: show search")
 

@@ -43,8 +43,17 @@ struct HtmlEpubAnnotation {
 }
 
 extension HtmlEpubAnnotation: ReaderAnnotation {
-    var lineWidth: CGFloat? { 0 }
-    var fontSize: CGFloat? { 12 }
+    var lineWidth: CGFloat? {
+        return 0
+    }
+
+    var fontSize: CGFloat? {
+        return 12
+    }
+
+    func author(displayName: String, username: String) -> String {
+        return author
+    }
 
     func editability(currentUserId: Int, library: Library) -> AnnotationEditability {
         switch library.identifier {

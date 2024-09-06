@@ -21,7 +21,7 @@ class HtmlEpubSidebarViewController: UIViewController {
     private weak var deleteBarButton: UIBarButtonItem?
     private var dataSource: TableViewDiffableDataSource<Int, String>!
     private var searchController: UISearchController!
-    weak var coordinatorDelegate: HtmlEpubSidebarCoordinatorDelegate?
+    weak var coordinatorDelegate: ReaderSidebarCoordinatorDelegate?
     weak var parentDelegate: HtmlEpubReaderContainerDelegate?
 
     init(viewModel: ViewModel<HtmlEpubReaderActionHandler>) {
@@ -380,7 +380,7 @@ class HtmlEpubSidebarViewController: UIViewController {
 
         toolbar.items = items
 
-        func showFilterPopup(from barButton: UIBarButtonItem, viewModel: ViewModel<HtmlEpubReaderActionHandler>, coordinatorDelegate: HtmlEpubSidebarCoordinatorDelegate?) {
+        func showFilterPopup(from barButton: UIBarButtonItem, viewModel: ViewModel<HtmlEpubReaderActionHandler>, coordinatorDelegate: ReaderSidebarCoordinatorDelegate?) {
             var colors: Set<String> = []
             var tags: Set<Tag> = []
 

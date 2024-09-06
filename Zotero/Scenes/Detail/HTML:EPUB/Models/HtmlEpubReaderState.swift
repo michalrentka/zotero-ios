@@ -91,8 +91,6 @@ struct HtmlEpubReaderState: ViewModelState {
     let title: String?
     let userId: Int
     let username: String
-    let commentFont: UIFont
-    let textFont: UIFont
 
     var library: Library
     var documentData: DocumentData?
@@ -141,8 +139,6 @@ struct HtmlEpubReaderState: ViewModelState {
         self.settings = settings
         self.userId = userId
         self.username = username
-        commentFont = PDFReaderLayout.annotationLayout.font
-        textFont = PDFReaderLayout.annotationLayout.font
         sortedKeys = []
         annotations = [:]
         comments = [:]
@@ -175,5 +171,11 @@ struct HtmlEpubReaderState: ViewModelState {
         focusSidebarKey = nil
         focusDocumentKey = nil
         updatedAnnotationKeys = nil
+    }
+}
+
+extension HtmlEpubReaderState: ReaderState {
+    var selectedReaderAnnotation: ReaderAnnotation? {
+        return annotationPopoverKey.flatMap({ annotations[$0] })
     }
 }

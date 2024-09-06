@@ -35,6 +35,7 @@
 		614D65822A79C9AC007CF449 /* Localizable.stringsdict in Resources */ = {isa = PBXBuildFile; fileRef = 614D65802A79C9AC007CF449 /* Localizable.stringsdict */; };
 		614D65832A79C9B0007CF449 /* Localizable.stringsdict in Resources */ = {isa = PBXBuildFile; fileRef = 614D65802A79C9AC007CF449 /* Localizable.stringsdict */; };
 		614D65872A8030C9007CF449 /* OrderedCollections in Frameworks */ = {isa = PBXBuildFile; productRef = 614D65862A8030C9007CF449 /* OrderedCollections */; };
+		615FD8772C8B475A00808C1D /* ReaderCoordinator.swift in Sources */ = {isa = PBXBuildFile; fileRef = 615FD8762C8B475A00808C1D /* ReaderCoordinator.swift */; };
 		61639F852AE03B8500026003 /* InstantPresenter.swift in Sources */ = {isa = PBXBuildFile; fileRef = 61639F842AE03B8500026003 /* InstantPresenter.swift */; };
 		618404262A4456A9005AAF22 /* IdentifierLookupController.swift in Sources */ = {isa = PBXBuildFile; fileRef = 618404252A4456A9005AAF22 /* IdentifierLookupController.swift */; };
 		618D83E72BAAC88C00E7966B /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 618D83E62BAAC88C00E7966B /* PrivacyInfo.xcprivacy */; };
@@ -1315,6 +1316,7 @@
 		613F32782C1086950088EF70 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		614D65812A79C9AC007CF449 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.stringsdict; name = en; path = en.lproj/Localizable.stringsdict; sourceTree = "<group>"; };
 		614D65842A7BCC22007CF449 /* ci_post_clone.sh */ = {isa = PBXFileReference; lastKnownFileType = text.script.sh; path = ci_post_clone.sh; sourceTree = "<group>"; };
+		615FD8762C8B475A00808C1D /* ReaderCoordinator.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReaderCoordinator.swift; sourceTree = "<group>"; };
 		61639F842AE03B8500026003 /* InstantPresenter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InstantPresenter.swift; sourceTree = "<group>"; };
 		618404252A4456A9005AAF22 /* IdentifierLookupController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = IdentifierLookupController.swift; sourceTree = "<group>"; };
 		618D83E62BAAC88C00E7966B /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; lastKnownFileType = text.xml; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
@@ -3600,6 +3602,7 @@
 			isa = PBXGroup;
 			children = (
 				B3866A592417C1C7006693C4 /* Coordinator.swift */,
+				615FD8762C8B475A00808C1D /* ReaderCoordinator.swift */,
 				B3866A572417C1BC006693C4 /* ViewModel.swift */,
 			);
 			path = Architecture;
@@ -4981,6 +4984,7 @@
 				B3429B8124BDE73A008359FC /* UIDevice+Extensions.swift in Sources */,
 				B3229FD128C0A07500DAF3B7 /* EditAnnotationRectsDbRequest.swift in Sources */,
 				B3DF9AD22747AAD2007933CB /* ApiRequest.swift in Sources */,
+				615FD8772C8B475A00808C1D /* ReaderCoordinator.swift in Sources */,
 				B3DCDF0E240912500039ED0D /* SinglePickerActionHandler.swift in Sources */,
 				B3593F162668E29C00FA4BB2 /* Style.swift in Sources */,
 				B3593F37241A61C700760E20 /* ItemDetailViewController.swift in Sources */,

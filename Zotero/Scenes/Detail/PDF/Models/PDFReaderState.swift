@@ -104,12 +104,8 @@ struct PDFReaderState: ViewModelState {
     let document: PSPDFKit.Document
     let title: String?
     let previewCache: NSCache<NSString, UIImage>
-    let textFont: UIFont
-    let textEditorFont: UIFont
-    let commentFont: UIFont
     let userId: Int
     let username: String
-    let displayName: String
 
     var library: Library
     var libraryToken: NotificationToken?
@@ -176,7 +172,6 @@ struct PDFReaderState: ViewModelState {
         settings: PDFSettings,
         userId: Int,
         username: String,
-        displayName: String,
         interfaceStyle: UIUserInterfaceStyle
     ) {
         self.key = key
@@ -185,12 +180,8 @@ struct PDFReaderState: ViewModelState {
         document.overrideClass(PSPDFKit.AnnotationManager.self, with: AnnotationManager.self)
         self.title = title
         self.previewCache = NSCache()
-        self.textFont = PDFReaderLayout.annotationLayout.font
-        self.textEditorFont = AnnotationPopoverLayout.annotationLayout.font
-        self.commentFont = PDFReaderLayout.annotationLayout.font
         self.userId = userId
         self.username = username
-        self.displayName = displayName
         self.sortedKeys = []
         self.documentAnnotations = [:]
         self.texts = [:]
@@ -261,5 +252,11 @@ struct PDFReaderState: ViewModelState {
         self.pdfNotification = nil
         self.changedColorForTool = nil
         self.unlockSuccessful = nil
+    }
+}
+
+extension PDFReaderState: ReaderState {
+    var selectedReaderAnnotation: (any ReaderAnnotation)? {
+        return selectedAnnotation
     }
 }

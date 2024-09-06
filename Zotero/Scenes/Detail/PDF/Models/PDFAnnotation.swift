@@ -13,10 +13,8 @@ protocol PDFAnnotation: ReaderAnnotation {
     var page: Int { get }
     var rotation: UInt? { get }
     var isSyncable: Bool { get }
-    var tags: [Tag] { get }
 
     func isAuthor(currentUserId: Int) -> Bool
-    func author(displayName: String, username: String) -> String
     func rects(boundingBoxConverter: AnnotationBoundingBoxConverter) -> [CGRect]
     func paths(boundingBoxConverter: AnnotationBoundingBoxConverter) -> [[CGPoint]]
 }
