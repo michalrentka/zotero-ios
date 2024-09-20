@@ -20,10 +20,12 @@ protocol ReaderAnnotation {
     var text: String? { get }
     var fontSize: CGFloat? { get }
     var sortIndex: String { get }
+    var dateAdded: Date { get }
     var dateModified: Date { get }
     var tags: [Tag] { get}
 
     func author(displayName: String, username: String) -> String
+    func isAuthor(currentUserId: Int) -> Bool
     func editability(currentUserId: Int, library: Library) -> AnnotationEditability
 }
 

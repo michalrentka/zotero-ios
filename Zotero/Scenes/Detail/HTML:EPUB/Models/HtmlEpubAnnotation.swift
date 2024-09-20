@@ -19,8 +19,8 @@ struct HtmlEpubAnnotation {
     let comment: String
     let text: String?
     let sortIndex: String
+    let dateAdded: Date
     let dateModified: Date
-    let dateCreated: Date
     let tags: [Tag]
 
     func copy(comment: String) -> HtmlEpubAnnotation {
@@ -35,8 +35,8 @@ struct HtmlEpubAnnotation {
             comment: comment,
             text: text,
             sortIndex: sortIndex,
+            dateAdded: dateAdded,
             dateModified: dateModified,
-            dateCreated: dateCreated,
             tags: tags
         )
     }
@@ -53,6 +53,10 @@ extension HtmlEpubAnnotation: ReaderAnnotation {
 
     func author(displayName: String, username: String) -> String {
         return author
+    }
+
+    func isAuthor(currentUserId: Int) -> Bool {
+        return isAuthor
     }
 
     func editability(currentUserId: Int, library: Library) -> AnnotationEditability {
