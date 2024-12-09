@@ -10,15 +10,10 @@ import Foundation
 
 import RealmSwift
 
-struct CreateHtmlEpubAnnotationsDbRequest: CreateReaderAnnotationsDbRequest {
-    let attachmentKey: String
-    let libraryId: LibraryIdentifier
-    let annotations: [HtmlEpubAnnotation]
-    let userId: Int
+class CreateHtmlEpubAnnotationsDbRequest: CreateReaderAnnotationsDbRequest<HtmlEpubAnnotation> {
+    override func addFields(for annotation: HtmlEpubAnnotation, to item: RItem, database: Realm) {
+        super.addFields(for: annotation, to: item, database: database)
 
-    unowned let schemaController: SchemaController
-
-    func addExtraFields(for annotation: HtmlEpubAnnotation, to item: RItem, database: Realm) {
         for field in FieldKeys.Item.Annotation.extraHtmlEpubFields(for: annotation.type) {
             let value: String
 
@@ -59,7 +54,7 @@ struct CreateHtmlEpubAnnotationsDbRequest: CreateReaderAnnotationsDbRequest {
         }
     }
 
-    func addTags(for annotation: HtmlEpubAnnotation, to item: RItem, database: Realm) {
+    override func addTags(for annotation: HtmlEpubAnnotation, to item: RItem, database: Realm) {
         let allTags = database.objects(RTag.self)
 
         for tag in annotation.tags {
@@ -73,6 +68,4 @@ struct CreateHtmlEpubAnnotationsDbRequest: CreateReaderAnnotationsDbRequest {
             rTypedTag.tag = rTag
         }
     }
-
-    func addAdditionalProperties(for annotation: HtmlEpubAnnotation, fromRestore: Bool, to item: RItem, changes: inout RItemChanges, database: Realm) { }
 }

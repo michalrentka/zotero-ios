@@ -10,16 +10,24 @@ import Foundation
 
 import RealmSwift
 
-struct CreatePDFAnnotationsDbRequest: CreateReaderAnnotationsDbRequest {
-    let attachmentKey: String
-    let libraryId: LibraryIdentifier
-    let annotations: [PDFDocumentAnnotation]
-    let userId: Int
-
-    unowned let schemaController: SchemaController
+class CreatePDFAnnotationsDbRequest: CreateReaderAnnotationsDbRequest<PDFDocumentAnnotation> {
     unowned let boundingBoxConverter: AnnotationBoundingBoxConverter
 
-    func addExtraFields(for annotation: PDFDocumentAnnotation, to item: RItem, database: Realm) {
+    init(
+        attachmentKey: String,
+        libraryId: LibraryIdentifier,
+        annotations: [PDFDocumentAnnotation],
+        userId: Int,
+        schemaController: SchemaController,
+        boundingBoxConverter: AnnotationBoundingBoxConverter
+    ) {
+        self.boundingBoxConverter = boundingBoxConverter
+        super.init(attachmentKey: attachmentKey, libraryId: libraryId, annotations: annotations, userId: userId, schemaController: schemaController)
+    }
+
+    override func addFields(for annotation: PDFDocumentAnnotation, to item: RItem, database: Realm) {
+        super.addFields(for: annotation, to: item, database: database)
+
         for field in FieldKeys.Item.Annotation.extraPDFFields(for: annotation.type) {
             let rField = RItemField()
             rField.key = field.key
@@ -50,9 +58,7 @@ struct CreatePDFAnnotationsDbRequest: CreateReaderAnnotationsDbRequest {
         }
     }
 
-    func addTags(for annotation: PDFDocumentAnnotation, to item: RItem, database: Realm) { }
-
-    func addAdditionalProperties(for annotation: PDFDocumentAnnotation, fromRestore: Bool, to item: RItem, changes: inout RItemChanges, database: Realm) {
+    override func addAdditionalProperties(for annotation: PDFDocumentAnnotation, fromRestore: Bool, to item: RItem, changes: inout RItemChanges, database: Realm) {
         add(rects: annotation.rects, fromRestore: fromRestore, to: item, changes: &changes, database: database)
         add(paths: annotation.paths, fromRestore: fromRestore, to: item, changes: &changes, database: database)
     }

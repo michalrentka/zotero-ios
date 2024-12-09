@@ -11,24 +11,22 @@ import Foundation
 import CocoaLumberjackSwift
 import RealmSwift
 
-protocol CreateReaderAnnotationsDbRequest: DbRequest {
-    associatedtype Annotation: ReaderAnnotation
+class CreateReaderAnnotationsDbRequest<Annotation: ReaderAnnotation>: DbRequest {
+    let attachmentKey: String
+    let libraryId: LibraryIdentifier
+    let annotations: [Annotation]
+    let userId: Int
+    unowned let schemaController: SchemaController
 
-    var attachmentKey: String { get }
-    var libraryId: LibraryIdentifier { get }
-    var annotations: [Annotation] { get }
-    var userId: Int { get }
-    var schemaController: SchemaController { get }
-
-    func create(annotation: Annotation, parent: RItem, in database: Realm)
-    func addFields(for annotation: Annotation, to item: RItem, database: Realm)
-    func addExtraFields(for annotation: Annotation, to item: RItem, database: Realm)
-    func addTags(for annotation: Annotation, to item: RItem, database: Realm)
-    func addAdditionalProperties(for annotation: Annotation, fromRestore: Bool, to item: RItem, changes: inout RItemChanges, database: Realm)
-}
-
-extension CreateReaderAnnotationsDbRequest {
     var needsWrite: Bool { return true }
+
+    init(attachmentKey: String, libraryId: LibraryIdentifier, annotations: [Annotation], userId: Int, schemaController: SchemaController) {
+        self.attachmentKey = attachmentKey
+        self.libraryId = libraryId
+        self.annotations = annotations
+        self.userId = userId
+        self.schemaController = schemaController
+    }
 
     func process(in database: Realm) throws {
         guard let parent = database.objects(RItem.self).uniqueObject(key: attachmentKey, libraryId: libraryId) else { return }
@@ -75,12 +73,11 @@ extension CreateReaderAnnotationsDbRequest {
             let user = database.object(ofType: RUser.self, forPrimaryKey: userId)
             item.createdBy = user
             if user == nil {
-                DDLogWarn("CreateReaderAnnotationsDbRequest: user not found for userId \(userId)")
+                DDLogWarn("CreateReaderAnnotationsDbRequest: user not found for userId \(userId) when creating annotation \(annotation.key) in library \(libraryId)")
             }
         }
 
         addFields(for: annotation, to: item, database: database)
-        addExtraFields(for: annotation, to: item, database: database)
         addTags(for: annotation, to: item, database: database)
         // We need to submit tags on creation even if they are empty, so we need to mark them as changed
         var changes: RItemChanges = [.parent, .fields, .type, .tags]
@@ -119,4 +116,8 @@ extension CreateReaderAnnotationsDbRequest {
             item.fields.append(rField)
         }
     }
+
+    func addTags(for annotation: Annotation, to item: RItem, database: Realm) { }
+
+    func addAdditionalProperties(for annotation: Annotation, fromRestore: Bool, to item: RItem, changes: inout RItemChanges, database: Realm) { }
 }
