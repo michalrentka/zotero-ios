@@ -557,6 +557,7 @@
 		B3445F4626EF5EE9007D4009 /* CrashReporter in Frameworks */ = {isa = PBXBuildFile; productRef = B3445F4526EF5EE9007D4009 /* CrashReporter */; };
 		B3451B55264ECBA9000EDF16 /* ReadGroupDbRequest.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3451B54264ECBA9000EDF16 /* ReadGroupDbRequest.swift */; };
 		B34673CF27B14F0D00444C96 /* CollectionCellContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = B34673CE27B14F0D00444C96 /* CollectionCellContentView.swift */; };
+		B3472F1A2D4784FB0071B028 /* PDFZPlainReaderViewController.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3472F192D4784FB0071B028 /* PDFZPlainReaderViewController.swift */; };
 		B347F2BA24DC4D5D000D5FF6 /* CapHeightLabel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B347F2B924DC4D5D000D5FF6 /* CapHeightLabel.swift */; };
 		B3486B8926CFAFEA0036A267 /* SingleCitationActionHandler.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3486B8226CFAFEA0036A267 /* SingleCitationActionHandler.swift */; };
 		B3486B8A26CFAFEA0036A267 /* SingleCitationState.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3486B8426CFAFEA0036A267 /* SingleCitationState.swift */; };
@@ -1651,6 +1652,7 @@
 		B34341B3260A496200093E63 /* ReadCollectionAndLibraryDbRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadCollectionAndLibraryDbRequest.swift; sourceTree = "<group>"; };
 		B3451B54264ECBA9000EDF16 /* ReadGroupDbRequest.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReadGroupDbRequest.swift; sourceTree = "<group>"; };
 		B34673CE27B14F0D00444C96 /* CollectionCellContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CollectionCellContentView.swift; sourceTree = "<group>"; };
+		B3472F192D4784FB0071B028 /* PDFZPlainReaderViewController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PDFZPlainReaderViewController.swift; sourceTree = "<group>"; };
 		B347F2B924DC4D5D000D5FF6 /* CapHeightLabel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CapHeightLabel.swift; sourceTree = "<group>"; };
 		B3486B8226CFAFEA0036A267 /* SingleCitationActionHandler.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SingleCitationActionHandler.swift; sourceTree = "<group>"; };
 		B3486B8426CFAFEA0036A267 /* SingleCitationState.swift */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.swift; path = SingleCitationState.swift; sourceTree = "<group>"; };
@@ -2978,8 +2980,8 @@
 				B340ECA5290FDC9F00EE920D /* AnnotationToolbarViewController.swift */,
 				B38B24B826E7664400BDD1BB /* AnnotationToolOptionsViewController.swift */,
 				B33AB487246D315F00490DDE /* CheckboxButton.swift */,
-				B325C4092A7A8DE0008A2F11 /* FreeTextAnnotationView.swift */,
 				B3A95DA929194BDE00BCCF11 /* DashedView.swift */,
+				B325C4092A7A8DE0008A2F11 /* FreeTextAnnotationView.swift */,
 				B3756E8E2B835BDC0001CD0A /* IntraDocumentNavigationButtonsHandler.swift */,
 				B31941DB24531F6600BF6296 /* PDFAnnotationsViewController.swift */,
 				B3B953CD245981DA00FC96DB /* PDFDocumentViewController.swift */,
@@ -2991,6 +2993,7 @@
 				B373877228FEA0C7004E5031 /* PDFSidebarViewController.swift */,
 				B31028062B1E070F00E41554 /* PDFThumbnailsCell.swift */,
 				B31028042B1E012A00E41554 /* PDFThumbnailsViewController.swift */,
+				B3472F192D4784FB0071B028 /* PDFZPlainReaderViewController.swift */,
 				B3BD86BB258CBCD600EF6674 /* SearchBar.swift */,
 				B3A47C3329014F8F00E7D90D /* SearchBarCell.swift */,
 				6135EF992C2ABCD7008DA17B /* SquareAnnotationView.swift */,
@@ -5355,6 +5358,7 @@
 				B30565B523FC051E003304F2 /* MarkObjectsAsSyncedDbRequest.swift in Sources */,
 				B30565DE23FC051E003304F2 /* SyncVersionsDbRequest.swift in Sources */,
 				B3DCDF06240912060039ED0D /* DocumentPickerViewController.swift in Sources */,
+				B3472F1A2D4784FB0071B028 /* PDFZPlainReaderViewController.swift in Sources */,
 				B37BF0B125A6035D00AE0268 /* ReadDocumentDataDbRequest.swift in Sources */,
 				B300B33324291C8D00C1FE1E /* RTranslatorMetadata.swift in Sources */,
 				B310FA4529E5765800FA2F15 /* AddTagsToItemDbRequest.swift in Sources */,
