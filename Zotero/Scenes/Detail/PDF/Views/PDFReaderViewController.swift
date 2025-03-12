@@ -40,7 +40,7 @@ class PDFReaderViewController: UIViewController {
     private var annotationToolbarHandler: AnnotationToolbarHandler!
     private var intraDocumentNavigationHandler: IntraDocumentNavigationButtonsHandler?
     private var selectedText: String?
-    private var speechManager: DocumentSpeechManager<PDFDocumentViewController>?
+    private var speechManager: SpeechManager<PDFReaderViewController>?
     private(set) var isCompactWidth: Bool
     @CodableUserDefault(key: "PDFReaderToolbarState", defaultValue: AnnotationToolbarHandler.State(position: .leading, visible: true), encoder: Defaults.jsonEncoder, decoder: Defaults.jsonDecoder)
     var toolbarState: AnnotationToolbarHandler.State
@@ -350,12 +350,12 @@ class PDFReaderViewController: UIViewController {
 
             func startSpeech(controller: PDFReaderViewController) {
                 if let speechManager = controller.speechManager {
-                    speechManager.startOnCurrentPage()
+                    speechManager.start()
                     return
                 }
 
-                let speechManager = DocumentSpeechManager(delegate: controller.documentController)
-                speechManager.startOnCurrentPage()
+                let speechManager = SpeechManager(delegate: controller)
+                speechManager.start()
                 controller.speechManager = speechManager
             }
         }
@@ -1012,5 +1012,29 @@ extension PDFReaderViewController: PDFSearchDelegate {
 
     func didSelectSearchResult(_ result: SearchResult) {
         documentController.highlightSelectedSearchResult(result)
+    }
+}
+
+extension PDFReaderViewController: SpeechmanagerDelegate {
+    func getCurrentPage() -> UInt {
+        return documentController.currentPage
+    }
+
+    func getNextPage(from currentPage: UInt) -> UInt? {
+        guard currentPage + 1 < viewModel.state.document.pageCount else { return nil }
+        return currentPage + 1
+    }
+
+    func getPreviousPage(from currentPage: UInt) -> UInt? {
+        guard currentPage > 0 else { return nil }
+        return currentPage - 1
+    }
+
+    func text(for page: UInt) -> String? {
+        return viewModel.state.document.textParserForPage(at: page)?.text
+    }
+
+    func moved(to page: UInt) {
+        documentController.focus(page: page)
     }
 }

@@ -47,6 +47,9 @@ final class PDFDocumentViewController: UIViewController {
     }
     private var searchResults: [SearchResult] = []
     private var pageIndexCancellable: AnyCancellable?
+    var currentPage: UInt {
+        return pdfController?.pageIndex ?? 0
+    }
 
     weak var parentDelegate: (PDFReaderContainerDelegate & PDFDocumentDelegate)?
     weak var coordinatorDelegate: PdfReaderCoordinatorDelegate?
@@ -1213,25 +1216,5 @@ extension PDFDocumentViewController: PSPDFKitUI.ScrubberBarDelegate {
         let currentPageIndex = pdfController.pageIndex
         pdfController.userInterfaceView.scrubberBar(scrubberBar, didSelectPageAt: pageIndex)
         pdfController.backForwardList.register(PSPDFKit.GoToAction(pageIndex: currentPageIndex))
-    }
-}
-
-extension PDFDocumentViewController: DocumentSpeechmanagerDelegate {
-    func getCurrentPage() -> UInt {
-        return pdfController?.pageIndex ?? 0
-    }
-    
-    func getNextPage(from currentPage: UInt) -> UInt? {
-        guard currentPage + 1 < viewModel.state.document.pageCount else { return nil }
-        return currentPage + 1
-    }
-
-    func getPreviousPage(from currentPage: UInt) -> UInt? {
-        guard currentPage > 0 else { return nil }
-        return currentPage - 1
-    }
-
-    func text(for page: UInt) -> String? {
-        return viewModel.state.document.textParserForPage(at: page)?.text
     }
 }
