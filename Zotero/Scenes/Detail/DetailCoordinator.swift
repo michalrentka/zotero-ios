@@ -66,6 +66,7 @@ protocol DetailItemDetailCoordinatorDelegate: AnyObject {
     func show(error: ItemDetailError, viewModel: ViewModel<ItemDetailActionHandler>)
     func showDataReloaded(completion: @escaping () -> Void)
     func showAttachment(key: String, parentKey: String?, libraryId: LibraryIdentifier, readerURL: URL?)
+    func showCollection(identifier: CollectionIdentifier, libraryId: LibraryIdentifier)
 }
 
 protocol DetailNoteEditorCoordinatorDelegate: AnyObject {
@@ -1047,6 +1048,10 @@ extension DetailCoordinator: DetailItemDetailCoordinatorDelegate {
         case .cantRemoveItem, .cantRemoveParent:
             title = L10n.error
             message = L10n.Errors.unknown
+            
+        case .cantRemoveCollection:
+            title = L10n.error
+            message = L10n.Errors.ItemDetail.cantRemoveCollection
         }
 
         let controller = UIAlertController(title: title, message: message, preferredStyle: .alert)
@@ -1068,6 +1073,10 @@ extension DetailCoordinator: DetailItemDetailCoordinatorDelegate {
             completion()
         }))
         self.navigationController?.present(controller, animated: true, completion: nil)
+    }
+    
+    func showCollection(identifier: CollectionIdentifier, libraryId: LibraryIdentifier) {
+        // TODO: - show collection
     }
 }
 
