@@ -333,10 +333,68 @@ final class ItemsViewController: BaseItemsViewController {
         }
     }
 
+    override func menu(for barButtonItem: RightBarButtonItem) -> UIMenu? {
+        switch barButtonItem {
+        case .add:
+            return createAddActionsMenu()
+
+        default:
+            return nil
+        }
+    }
+
+    private func createAddActionsMenu() -> UIMenu {
+        var actions: [UIAction] = []
+
+        actions.append(UIAction(title: L10n.Items.lookup, handler: { [weak self] _ in
+            self?.coordinatorDelegate?.showLookup(startWith: .manual(restoreLookupState: false))
+        }))
+
+        actions.append(UIAction(title: L10n.Items.barcode, handler: { [weak self] _ in
+            self?.coordinatorDelegate?.showLookup(startWith: .scanner)
+        }))
+
+        actions.append(UIAction(title: L10n.Items.new, handler: { [weak self] _ in
+            guard let self else { return }
+            let collectionsSource: ItemDetailState.DetailType.CollectionsSource?
+            switch viewModel.state.collection.identifier {
+            case .collection(let key):
+                collectionsSource = .collectionKeys([key])
+
+            case .search, .custom:
+                collectionsSource = nil
+            }
+            coordinatorDelegate?.showTypePicker(selected: "") { [weak self] type in
+                guard let self else { return }
+                coordinatorDelegate?.showItemDetail(
+                    for: .creation(type: type, child: nil, collectionsSource: collectionsSource),
+                    libraryId: viewModel.state.library.identifier,
+                    scrolledToKey: nil,
+                    animated: true
+                )
+            }
+        }))
+
+        actions.append(UIAction(title: L10n.Items.newNote, handler: { [weak self] _ in
+            guard let self else { return }
+            coordinatorDelegate?.showNote(library: viewModel.state.library, kind: .standaloneCreation(collection: viewModel.state.collection), text: "", tags: [], parentTitleData: nil, title: nil, saveCallback: nil)
+        }))
+
+        if viewModel.state.library.filesEditable {
+            actions.append(UIAction(title: L10n.Items.newFile, handler: { [weak self] _ in
+                self?.coordinatorDelegate?.showAttachmentPicker(save: { urls in
+                    self?.viewModel.process(action: .addAttachments(urls))
+                })
+            }))
+        }
+
+        return UIMenu(children: actions)
+    }
+
     override func process(barButtonItemAction: BaseItemsViewController.RightBarButtonItem, sender: UIBarButtonItem) {
         switch barButtonItemAction {
         case .add:
-            coordinatorDelegate?.showAddActions(viewModel: viewModel, button: sender)
+            break
 
         case .deselectAll, .selectAll:
             viewModel.process(action: .toggleSelectionState)
@@ -499,8 +557,8 @@ extension ItemsViewController: ItemsToolbarControllerDelegate {
         process(action: action, for: viewModel.state.selectedItems, button: button, completionAction: nil)
     }
 
-    func showLookup() {
-        coordinatorDelegate?.showLookup()
+    func showLookup(startWith: LookupStartingView) {
+        coordinatorDelegate?.showLookup(startWith: startWith)
     }
 
     func sortTypeChanged(_ sortType: ItemsSortType) {

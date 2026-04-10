@@ -325,8 +325,8 @@ extension TrashViewController: ItemsToolbarControllerDelegate {
         process(action: action, for: viewModel.state.selectedItems, button: button, completionAction: nil)
     }
 
-    func showLookup() {
-        coordinatorDelegate?.showLookup()
+    func showLookup(startWith: LookupStartingView) {
+        coordinatorDelegate?.showLookup(startWith: startWith)
     }
 
     func sortTypeChanged(_ sortType: ItemsSortType) {

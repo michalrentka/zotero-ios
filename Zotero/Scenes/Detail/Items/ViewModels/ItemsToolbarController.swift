@@ -13,7 +13,7 @@ import RxSwift
 
 protocol ItemsToolbarControllerDelegate: UITraitEnvironment {
     func process(action: ItemAction.Kind, button: UIBarButtonItem)
-    func showLookup()
+    func showLookup(startWith: LookupStartingView)
     func sortTypeChanged(_ sortType: ItemsSortType)
     func downloadsFilterChanged(enabled: Bool)
 }
@@ -205,7 +205,7 @@ final class ItemsToolbarController {
                    .event
                    .observe(on: MainScheduler.instance)
                    .subscribe(onNext: { [weak self] _ in
-                       self?.delegate?.showLookup()
+                       self?.delegate?.showLookup(startWith: .manual(restoreLookupState: true))
                    })
                    .disposed(by: self.disposeBag)
                 progressView.addGestureRecognizer(tap)

@@ -38,7 +38,9 @@ protocol DetailItemsCoordinatorDelegate: AnyObject {
     func showCollectionsPicker(in library: Library, completed: @escaping (Set<String>) -> Void)
     func showItemDetail(for type: ItemDetailState.DetailType, libraryId: LibraryIdentifier, scrolledToKey childKey: String?, animated: Bool)
     func showAttachmentError(_ error: Error)
-    func showAddActions(viewModel: ViewModel<ItemsActionHandler>, button: UIBarButtonItem)
+    func showLookup(startWith: LookupStartingView)
+    func showTypePicker(selected: String, picked: @escaping (String) -> Void)
+    func showAttachmentPicker(save: @escaping ([URL]) -> Void)
     func show(url: URL)
     func show(doi: String)
     func showDeletionQuestion(count: Int, confirmAction: @escaping () -> Void, cancelAction: @escaping () -> Void)
@@ -48,7 +50,6 @@ protocol DetailItemsCoordinatorDelegate: AnyObject {
     func showCiteExport(for itemIds: Set<String>, libraryId: LibraryIdentifier)
     func showAttachment(key: String, parentKey: String?, libraryId: LibraryIdentifier, readerURL: URL?)
     func show(error: ItemsError)
-    func showLookup()
 }
 
 protocol DetailItemDetailCoordinatorDelegate: AnyObject {
@@ -434,51 +435,6 @@ extension DetailCoordinator: DetailItemsCoordinatorDelegate {
         collection.name
     }
 
-    func showAddActions(viewModel: ViewModel<ItemsActionHandler>, button: UIBarButtonItem) {
-        let controller = UIAlertController(title: nil, message: nil, preferredStyle: .actionSheet)
-        controller.popoverPresentationController?.sourceItem = button
-
-        controller.addAction(UIAlertAction(title: L10n.Items.lookup, style: .default, handler: { [weak self] _ in
-            self?.showLookup(startWith: .manual(restoreLookupState: false))
-        }))
-
-        controller.addAction(UIAlertAction(title: L10n.Items.barcode, style: .default, handler: { [weak self] _ in
-            self?.showLookup(startWith: .scanner)
-        }))
-
-        controller.addAction(UIAlertAction(title: L10n.Items.new, style: .default, handler: { [weak self, weak viewModel] _ in
-            guard let self, let viewModel else { return }
-            let collectionsSource: ItemDetailState.DetailType.CollectionsSource?
-            switch viewModel.state.collection.identifier {
-            case .collection(let key):
-                collectionsSource = .collectionKeys([key])
-
-            case .search, .custom:
-                collectionsSource = nil
-            }
-            showTypePicker(selected: "") { [weak self] type in
-                self?.showItemDetail(for: .creation(type: type, child: nil, collectionsSource: collectionsSource), libraryId: viewModel.state.library.identifier, scrolledToKey: nil, animated: true)
-            }
-        }))
-
-        controller.addAction(UIAlertAction(title: L10n.Items.newNote, style: .default, handler: { [weak self, weak viewModel] _ in
-            guard let self, let viewModel else { return }
-            showNote(library: viewModel.state.library, kind: .standaloneCreation(collection: viewModel.state.collection), saveCallback: nil)
-        }))
-
-        if viewModel.state.library.filesEditable {
-            controller.addAction(UIAlertAction(title: L10n.Items.newFile, style: .default, handler: { [weak self, weak viewModel] _ in
-                self?.showAttachmentPicker(save: { urls in
-                    viewModel?.process(action: .addAttachments(urls))
-                })
-            }))
-        }
-
-        controller.addAction(UIAlertAction(title: L10n.cancel, style: .cancel, handler: nil))
-
-        self.navigationController?.present(controller, animated: true, completion: nil)
-    }
-
     func createNoteController(
         library: Library,
         kind: NoteEditorKind,
@@ -710,7 +666,7 @@ extension DetailCoordinator: DetailItemsCoordinatorDelegate {
         self.navigationController?.present(controller, animated: true, completion: nil)
     }
 
-    private func showLookup(startWith: LookupStartingView) {
+    func showLookup(startWith: LookupStartingView) {
         let navigationController = NavigationViewController()
         navigationController.isModalInPresentation = true
         navigationController.modalPresentationStyle = .formSheet
@@ -721,10 +677,6 @@ extension DetailCoordinator: DetailItemsCoordinatorDelegate {
         coordinator.start(animated: false)
 
         self.navigationController?.present(navigationController, animated: true, completion: nil)
-    }
-    
-    func showLookup() {
-        showLookup(startWith: .manual(restoreLookupState: true))
     }
 }
 

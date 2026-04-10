@@ -372,15 +372,24 @@ class BaseItemsViewController: UIViewController {
                 accessibilityLabel = L10n.Collections.emptyTrash
             }
 
-            let primaryAction = UIAction { [weak self] action in
-                guard let self, let sender = action.sender as? UIBarButtonItem else { return }
-                process(barButtonItemAction: type, sender: sender)
+            let item: UIBarButtonItem
+            if let menu = menu(for: type) {
+                item = UIBarButtonItem(title: title, image: image, menu: menu)
+            } else {
+                let primaryAction = UIAction { [weak self] action in
+                    guard let self, let sender = action.sender as? UIBarButtonItem else { return }
+                    process(barButtonItemAction: type, sender: sender)
+                }
+                item = UIBarButtonItem(title: title, image: image, primaryAction: primaryAction)
             }
-            let item = UIBarButtonItem(title: title, image: image, primaryAction: primaryAction)
             item.tag = type.rawValue
             item.accessibilityLabel = accessibilityLabel
             return item
         }
+    }
+
+    func menu(for barButtonItem: RightBarButtonItem) -> UIMenu? {
+        return nil
     }
 }
 
