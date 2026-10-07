@@ -248,8 +248,6 @@ final class WebSocketController {
             return
         }
 
-        // Retry count is not reset on successful connection, only on successful subscription, because the server can accept the connection
-        // and close it after subscription attempt (e.g. 4429 when rate limited).
         let interval = WebSocketController.retryIntervals[min(connectionRetryCount, (WebSocketController.retryIntervals.count - 1))]
         connectionRetryCount += 1
         DDLogInfo("WebSocketController: closed with code \(closeCode), schedule reconnect attempt \(connectionRetryCount) interval \(interval)")
@@ -557,6 +555,7 @@ class SubscriptionWebSocketController {
         DDLogInfo("\(logCategory): connected & subscribed")
         subscriptionState = .subscribed
         resetRetryState()
+        // Retry count is reset on successful subscription, because the server can accept the connection and close it after subscription attempt (e.g. 4429 when rate limited).
         transport.resetConnectionRetryCount()
         didSubscribe()
         completionAction?()
