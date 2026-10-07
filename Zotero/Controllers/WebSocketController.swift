@@ -57,7 +57,6 @@ final class WebSocketController {
 
     private static let completionTimeout: Int = 1500 // miliseconds
     private static let messageTimeout: Int = 30
-    private static let disconnectionTimeout: Int = 5
 
     private let queue: DispatchQueue
     private let queueKey: DispatchSpecificKey<String>
@@ -185,7 +184,6 @@ final class WebSocketController {
             DDLogInfo("WebSocketController: connected")
 
             connectionState.accept(.connected)
-            connectionRetryCount = 0
             connectionTimer?.suspend()
             connectionTimer = nil
             completionTimer?.suspend()
@@ -239,7 +237,8 @@ final class WebSocketController {
     }
 
     /// Reconnects to server after disconnection.
-    private func reconnect() {
+    /// - parameter closeCode: Close code sent by server.
+    private func reconnect(closeCode: UInt16) {
         guard connectionState.value == .connected else { return }
 
         connectionState.accept(.disconnected)
@@ -249,9 +248,13 @@ final class WebSocketController {
             return
         }
 
-        DDLogInfo("WebSocketController: schedule reconnect")
+        // Retry count is not reset on successful connection, only on successful subscription, because the server can accept the connection
+        // and close it after subscription attempt (e.g. 4429 when rate limited).
+        let interval = WebSocketController.retryIntervals[min(connectionRetryCount, (WebSocketController.retryIntervals.count - 1))]
+        connectionRetryCount += 1
+        DDLogInfo("WebSocketController: closed with code \(closeCode), schedule reconnect attempt \(connectionRetryCount) interval \(interval)")
 
-        let timer = BackgroundTimer(timeInterval: .seconds(WebSocketController.disconnectionTimeout), queue: queue)
+        let timer = BackgroundTimer(timeInterval: .seconds(interval), queue: queue)
         timer.eventHandler = { [weak self] in
             guard let self else { return }
             connectInternal(completed: nil)
@@ -325,6 +328,12 @@ final class WebSocketController {
         }
     }
 
+    fileprivate func resetConnectionRetryCount() {
+        perform { [weak self] in
+            self?.connectionRetryCount = 0
+        }
+    }
+
     fileprivate func setRedactedValues(_ values: Set<String>) {
         perform { [weak self] in
             self?.redactedValues = values
@@ -360,8 +369,8 @@ final class WebSocketController {
         case .ping, .pong, .viabilityChanged, .reconnectSuggested, .connected, .cancelled, .error, .peerClosed:
             break
 
-        case .disconnected:
-            reconnect()
+        case .disconnected(_, let code):
+            reconnect(closeCode: code)
 
         case .binary(let data):
             handle(data: data)
@@ -548,6 +557,7 @@ class SubscriptionWebSocketController {
         DDLogInfo("\(logCategory): connected & subscribed")
         subscriptionState = .subscribed
         resetRetryState()
+        transport.resetConnectionRetryCount()
         didSubscribe()
         completionAction?()
         completionAction = nil
