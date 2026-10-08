@@ -57,11 +57,15 @@ final class WebSocketController {
 
     private static let completionTimeout: Int = 1500 // miliseconds
     private static let messageTimeout: Int = 30
+    private static let clientErrorCloseCodes: ClosedRange<UInt16> = 4400...4499
+    private static let rateLimitedCloseCode: UInt16 = 4429
 
     private let queue: DispatchQueue
     private let queueKey: DispatchSpecificKey<String>
     private let queueLabel: String
     fileprivate let messageObservable: PublishSubject<Data>
+    /// Emits close code when server closed the connection due to client error. Connection is not retried after that.
+    fileprivate let clientErrorObservable: PublishSubject<UInt16>
     fileprivate private(set) var connectionState: BehaviorRelay<ConnectionState>
 
     private let url: URL
@@ -96,6 +100,7 @@ final class WebSocketController {
         self.queue = queue
         scheduler = SerialDispatchQueueScheduler(queue: queue, internalSerialQueueName: "org.zotero.WebSocketScheduler." + uuidString)
         messageObservable = PublishSubject()
+        clientErrorObservable = PublishSubject()
         disposeBag = DisposeBag()
         shouldStayConnected = false
         redactedValues = []
@@ -262,6 +267,15 @@ final class WebSocketController {
         connectionTimer = timer
     }
 
+    /// Disconnects without reconnecting after server closed the connection due to client error.
+    /// - parameter code: Close code sent by server.
+    private func closeAfterClientError(code: UInt16) {
+        DDLogWarn("WebSocketController: closed with code \(code), won't reconnect")
+        shouldStayConnected = false
+        disconnectInternal()
+        clientErrorObservable.on(.next(code))
+    }
+
     /// Disconnects from server.
     func disconnect() {
         perform { [weak self] in
@@ -368,7 +382,12 @@ final class WebSocketController {
             break
 
         case .disconnected(_, let code):
-            reconnect(closeCode: code)
+            // Client errors won't be fixed by retrying, except for rate limiting, which is retried with backoff.
+            if WebSocketController.clientErrorCloseCodes.contains(code) && code != WebSocketController.rateLimitedCloseCode {
+                closeAfterClientError(code: code)
+            } else {
+                reconnect(closeCode: code)
+            }
 
         case .binary(let data):
             handle(data: data)
@@ -457,6 +476,12 @@ class SubscriptionWebSocketController {
         transport.messageObservable
             .subscribe(onNext: { [weak self] data in
                 self?.handleTransportData(data)
+            })
+            .disposed(by: disposeBag)
+
+        transport.clientErrorObservable
+            .subscribe(onNext: { [weak self] code in
+                self?.handleClientError(code: code)
             })
             .disposed(by: disposeBag)
     }
@@ -558,6 +583,15 @@ class SubscriptionWebSocketController {
         // Retry count is reset on successful subscription, because the server can accept the connection and close it after subscription attempt (e.g. 4429 when rate limited).
         transport.resetConnectionRetryCount()
         didSubscribe()
+        completionAction?()
+        completionAction = nil
+    }
+
+    private func handleClientError(code: UInt16) {
+        DDLogWarn("\(logCategory): connection closed with client error \(code)")
+        resetRetryState()
+        clearSubscription()
+        // Let the caller continue (e.g. with sync), it doesn't depend on websocket connection.
         completionAction?()
         completionAction = nil
     }
