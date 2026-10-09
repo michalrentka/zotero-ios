@@ -16,7 +16,7 @@ import Starscream
 final class WebSocketController {
     private struct Response {
         let timer: BackgroundTimer
-        let completion: () -> Void
+        let completion: (WebSocketController.Error?) -> Void
 
         static func create(timeout: DispatchTimeInterval, queue: DispatchQueue, completion: @escaping (WebSocketController.Error?) -> Void) -> Response {
             let timer = BackgroundTimer(timeInterval: timeout, queue: queue)
@@ -25,9 +25,9 @@ final class WebSocketController {
             }
             timer.resume()
 
-            return Response(timer: timer, completion: {
+            return Response(timer: timer, completion: { error in
                 timer.suspend()
-                completion(nil)
+                completion(error)
             })
         }
     }
@@ -54,6 +54,10 @@ final class WebSocketController {
                                                     14400, 14400, 14400,   // every 4 hours for 12 hours
                                                     86400                  // 1 day
                                                    ]
+
+    fileprivate static func retryInterval(for retryCount: Int) -> Int {
+        return retryIntervals[min(retryCount, retryIntervals.count - 1)]
+    }
 
     private static let completionTimeout: Int = 1500 // miliseconds
     private static let messageTimeout: Int = 30
@@ -215,17 +219,21 @@ final class WebSocketController {
             break
         }
 
-        let interval = WebSocketController.retryIntervals[min(connectionRetryCount, (WebSocketController.retryIntervals.count - 1))]
+        scheduleConnectionRetry(reason: "connection failed")
+    }
+
+    /// Schedules next connection attempt based on retry count.
+    /// - parameter reason: Reason for logging.
+    private func scheduleConnectionRetry(reason: String) {
+        let interval = WebSocketController.retryInterval(for: connectionRetryCount)
         connectionRetryCount += 1
-        DDLogInfo("WebSocketController: schedule retry attempt \(connectionRetryCount) interval \(interval)")
+        DDLogInfo("WebSocketController: \(reason), schedule retry attempt \(connectionRetryCount) interval \(interval)")
 
         let timer = BackgroundTimer(timeInterval: .seconds(interval), queue: queue)
         timer.eventHandler = { [weak self] in
             guard let self else { return }
-            guard shouldStayConnected else {
-                connectionTimer = nil
-                return
-            }
+            connectionTimer = nil
+            guard shouldStayConnected else { return }
 
             switch connectionState.value {
             case .disconnected, .connecting:
@@ -234,8 +242,6 @@ final class WebSocketController {
             case .connected:
                 break
             }
-
-            connectionTimer = nil
         }
         timer.resume()
         connectionTimer = timer
@@ -247,24 +253,23 @@ final class WebSocketController {
         guard connectionState.value == .connected else { return }
 
         connectionState.accept(.disconnected)
+        // Responses won't arrive on closed connection. Fail them now, otherwise their timeouts could trigger retries outside of reconnect backoff.
+        failResponseListeners()
 
         guard shouldStayConnected else {
             DDLogWarn("WebSocketController: websocket disconnected without reconnect intent")
             return
         }
 
-        let interval = WebSocketController.retryIntervals[min(connectionRetryCount, (WebSocketController.retryIntervals.count - 1))]
-        connectionRetryCount += 1
-        DDLogInfo("WebSocketController: closed with code \(closeCode), schedule reconnect attempt \(connectionRetryCount) interval \(interval)")
+        scheduleConnectionRetry(reason: "closed with code \(closeCode)")
+    }
 
-        let timer = BackgroundTimer(timeInterval: .seconds(interval), queue: queue)
-        timer.eventHandler = { [weak self] in
-            guard let self else { return }
-            connectInternal(completed: nil)
-            connectionTimer = nil
+    private func failResponseListeners() {
+        let listeners = responseListeners
+        responseListeners = [:]
+        for (_, response) in listeners {
+            response.completion(.notConnected)
         }
-        timer.resume()
-        connectionTimer = timer
     }
 
     /// Disconnects without reconnecting after server closed the connection due to client error.
@@ -287,14 +292,14 @@ final class WebSocketController {
 
     /// Disconnects from websocket and cleans up.
     private func disconnectInternal() {
+        // Reset retry counter
+        connectionRetryCount = 0
+        // Suspend connection timer if connection is in progress or reconnect is scheduled. Reconnect is scheduled while already disconnected, so this needs to happen before the state check.
+        connectionTimer?.suspend()
+        connectionTimer = nil
         guard connectionState.value != .disconnected else { return }
         // Set state to disconnected
         connectionState.accept(.disconnected)
-        // Reset retry counter
-        connectionRetryCount = 0
-        // Suspend connection timer if connection is in progress
-        connectionTimer?.suspend()
-        connectionTimer = nil
         // Suspend completion timer if completion exists
         completionTimer?.suspend()
         completionTimer = nil
@@ -404,7 +409,7 @@ final class WebSocketController {
             let event = try jsonDecoder.decode(WsResponse.self, from: data).event
 
             if let response = responseListeners[event] {
-                response.completion()
+                response.completion(nil)
                 return
             }
 
@@ -599,7 +604,7 @@ class SubscriptionWebSocketController {
     private func retrySubscriptionIfNeeded() {
         guard subscriptionValue != nil else { return }
 
-        let interval = WebSocketController.retryIntervals[min(retryCount, WebSocketController.retryIntervals.count - 1)]
+        let interval = WebSocketController.retryInterval(for: retryCount)
         retryCount += 1
         DDLogInfo("\(logCategory): schedule retry attempt \(retryCount) interval \(interval)")
 
@@ -612,11 +617,9 @@ class SubscriptionWebSocketController {
             case .connected:
                 subscribeIfNeeded()
 
-            case .connecting:
+            case .connecting, .disconnected:
+                // Transport reconnects on its own (with backoff) and subscription is created again after connection.
                 break
-
-            case .disconnected:
-                transport.connect()
             }
         }
         timer.resume()
