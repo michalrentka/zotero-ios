@@ -262,13 +262,13 @@ final class WebSocketController {
         }
 
         scheduleConnectionRetry(reason: "closed with code \(closeCode)")
-    }
 
-    private func failResponseListeners() {
-        let listeners = responseListeners
-        responseListeners = [:]
-        for (_, response) in listeners {
-            response.completion(.notConnected)
+        func failResponseListeners() {
+            let listeners = responseListeners
+            responseListeners = [:]
+            for (_, response) in listeners {
+                response.completion(.notConnected)
+            }
         }
     }
 
