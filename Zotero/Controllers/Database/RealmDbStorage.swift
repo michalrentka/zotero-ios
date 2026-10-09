@@ -94,8 +94,10 @@ extension RealmDbStorage: DbStorage {
         try self.performInAutoreleasepoolIfNeeded {
             let coordinator = try RealmDbCoordinator(configuration: self.config, queue: queue)
             try coordinator.perform(request: request)
-            // Since there is no result we can always invalidate realm to free memory
-            coordinator.invalidate()
+            if queue != .main {
+                // Since there is no result we can always invalidate realm to free memory
+                coordinator.invalidate()
+            }
         }
     }
 
@@ -103,8 +105,10 @@ extension RealmDbStorage: DbStorage {
         try self.performInAutoreleasepoolIfNeeded {
             let coordinator = try RealmDbCoordinator(configuration: self.config, queue: queue)
             try coordinator.perform(writeRequests: requests)
-            // Since there is no result we can always invalidate realm to free memory
-            coordinator.invalidate()
+            if queue != .main {
+                // Since there is no result we can always invalidate realm to free memory
+                coordinator.invalidate()
+            }
         }
     }
 }
