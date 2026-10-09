@@ -441,10 +441,10 @@ final class WebSocketController {
     // MARK: - Low Power Mode
 
     private func lowPowerModeChanged(isEnabled: Bool) {
-        guard connectionState.value != .disconnected else { return }
         if isEnabled {
+            // Also cancels scheduled reconnect.
             disconnectInternal()
-        } else if shouldStayConnected {
+        } else if shouldStayConnected && connectionState.value == .disconnected {
             connectInternal(completed: nil)
         }
     }
